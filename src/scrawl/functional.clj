@@ -9,28 +9,35 @@
 
 (set! *warn-on-reflection* true)
 
-(defprotocol Shape
-  (transform [_ transformation])
-  (render [_]))
+;;;
 
 (defn transformation []
   (AffineTransform.))
 
-(defmacro def-transform [name args affine-transform]
+;; this is *not* a very robust defn macro, since it doesn't support
+;; doc-strings or function metadata.  This is okay if you're the only
+;; consumer of the macro, but not if you want other people to use it
+(defmacro defn-transform [name args affine-transform]
   `(defn ~name ~args
      (let [^AffineTransform original-transformation# ~(first args)
            transformation# (AffineTransform. original-transformation#)]
        (.concatenate transformation# ~affine-transform)
        transformation#)))
 
-(def-transform scale [transformation x y]
+(defn-transform scale [transformation x y]
   (AffineTransform/getScaleInstance x y))
 
-(def-transform translate [transformation x y]
+(defn-transform translate [transformation x y]
   (AffineTransform/getTranslateInstance x y))
 
-(def-transform rotate [transformation degrees]
+(defn-transform rotate [transformation degrees]
   (AffineTransform/getRotateInstance (Math/toRadians degrees)))
+
+;;;
+
+(defprotocol Shape
+  (transform [_ transformation])
+  (render [_]))
 
 (defrecord Polygon [^java.awt.Polygon polygon color]
   Shape
